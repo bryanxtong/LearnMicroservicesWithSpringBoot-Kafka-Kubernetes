@@ -5,10 +5,6 @@ spring:
   application:
     name: gateway
   cloud:
-    loadbalancer:
-      ribbon:
-        # Not needed since we excluded the dependency
-        enabled: false
     consul:
       enabled: true
       discovery:
@@ -17,36 +13,38 @@ spring:
       host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
       port: 8500
     gateway:
-      routes:
-        - id: multiplication
-          uri: lb://multiplication/
-          predicates:
-            - Path=/challenges/**,/attempts/**,/users/**
-        - id: gamification
-          uri: lb://gamification/
-          predicates:
-            - Path=/leaders
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowedOrigins: "http://localhost:3000"
-            allowedHeaders:
-              - "*"
-            allowedMethods:
-              - "GET"
-              - "POST"
-              - "OPTIONS"
-      default-filters:
-        - name: Retry
-          args:
-            retries: 3
-            methods: GET,POST
-      observability:
-        enabled: true
-      #httpserver:
-        #wiretap: true
-      #httpclient:
-        #wiretap: true
+      server:
+        webflux:
+          routes:
+            - id: multiplication
+              uri: lb://multiplication/
+              predicates:
+                - Path=/challenges/**,/attempts/**,/users/**
+            - id: gamification
+              uri: lb://gamification/
+              predicates:
+                - Path=/leaders
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins: "http://localhost:3000"
+                allowedHeaders:
+                  - "*"
+                allowedMethods:
+                  - "GET"
+                  - "POST"
+                  - "OPTIONS"
+          default-filters:
+            - name: Retry
+              args:
+                retries: 3
+                methods: GET,POST
+          observability:
+            enabled: true
+          #httpserver:
+            #wiretap: true
+          #httpclient:
+            #wiretap: true
   reactor:
     context-propagation: auto
   kafka:
@@ -86,15 +84,17 @@ spring:
       on-profile: docker
   cloud:
     gateway:
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowedOrigins: "http://challenges-frontend:3000"
-            allowedHeaders:
-              - "*"
-            allowedMethods:
-              - "GET"
-              - "POST"
-              - "OPTIONS"
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins: "http://challenges-frontend:3000"
+                allowedHeaders:
+                  - "*"
+                allowedMethods:
+                  - "GET"
+                  - "POST"
+                  - "OPTIONS"
   kafka:
     bootstrap-servers: ${SPRING_CLOUD_KAFKA_HOST}:9092
