@@ -1,4 +1,4 @@
-FROM consul:1.15.4
+FROM hashicorp/consul:1.22.3
 COPY ./consul-kv-docker.json /usr/src/consul/
 WORKDIR /usr/src/consul
 ENV CONSUL_HTTP_ADDR=consul:8500

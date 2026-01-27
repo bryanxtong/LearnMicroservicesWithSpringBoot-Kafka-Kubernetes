@@ -9,6 +9,10 @@
     <springProperty scope="context" name="applicationId" source="spring.application.name" defaultValue="gamification"/>
     <springProperty scope="context" name="port" source="server.port" defaultValue="8081"/>
 
+    <!--disable the kafka logs or set to warn/error to avoid kafka internal logging to make KafkaProducer create properly-->
+    <logger name="org.apache.kafka.clients" level="OFF" />
+    <logger name="org.apache.kafka.common" level="OFF" />
+
     <!-- This is the kafkaAppender -->
     <appender name="kafkaAppender" class="logback.kafka.KafkaAppenderWithHeader">
         <encoder>

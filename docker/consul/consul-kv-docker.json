@@ -5,12 +5,12 @@
 		"value": ""
 	},
 	{
-		"key": "config/defaults,docker/",
+		"key": "config/application,docker/",
 		"flags": 0,
 		"value": ""
 	},
 	{
-		"key": "config/defaults,docker/application.yml",
+		"key": "config/application,docker/data",
 		"flags": 0,
 		"value": "bG9nZ2luZzoKICBsZXZlbDoKICAgIG9yZy5zcHJpbmdmcmFtZXdvcmsuY29yZS5lbnY6IERFQlVH"
 	}

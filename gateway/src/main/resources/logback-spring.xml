@@ -9,6 +9,10 @@
     <springProperty scope="context" name="applicationId" source="spring.application.name" defaultValue="gateway"/>
     <springProperty scope="context" name="port" source="server.port" defaultValue="8080"/>
 
+    <!--disable the kafka logs or set to warn/error to avoid kafka internal logging to make KafkaProducer create properly-->
+    <logger name="org.apache.kafka.clients" level="OFF" />
+    <logger name="org.apache.kafka.common" level="OFF" />
+
     <!-- This is the kafkaAppender and It is using native kafka clients, not spring kafka-->
     <appender name="kafkaAppender" class="logback.kafka.KafkaAppenderWithHeader">
         <encoder>

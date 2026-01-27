@@ -2,8 +2,6 @@ server:
   port: 8000
 
 spring:
-  application:
-    name: gateway
   cloud:
     loadbalancer:
       ribbon:
@@ -17,36 +15,38 @@ spring:
       host: ${SPRING_CLOUD_CONSUL_HOST:localhost}
       port: 8500
     gateway:
-      routes:
-        - id: multiplication
-          uri: lb://multiplication/
-          predicates:
-            - Path=/challenges/**,/attempts/**,/users/**
-        - id: gamification
-          uri: lb://gamification/
-          predicates:
-            - Path=/leaders
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowedOrigins: "http://localhost:3000"
-            allowedHeaders:
-              - "*"
-            allowedMethods:
-              - "GET"
-              - "POST"
-              - "OPTIONS"
-      default-filters:
-        - name: Retry
-          args:
-            retries: 3
-            methods: GET,POST
-      observability:
-        enabled: true
-      #httpserver:
-        #wiretap: true
-      #httpclient:
-        #wiretap: true
+      server:
+        webflux:
+          routes:
+            - id: multiplication
+              uri: lb://multiplication/
+              predicates:
+                - Path=/challenges/**,/attempts/**,/users/**
+            - id: gamification
+              uri: lb://gamification/
+              predicates:
+                - Path=/leaders
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins: "http://localhost:3000"
+                allowedHeaders:
+                  - "*"
+                allowedMethods:
+                  - "GET"
+                  - "POST"
+                  - "OPTIONS"
+          default-filters:
+            - name: Retry
+              args:
+                retries: 3
+                methods: GET,POST
+          observability:
+            enabled: true
+            #httpserver:
+            #wiretap: true
+            #httpclient:
+            #wiretap: true
   reactor:
     context-propagation: auto
   kafka:
@@ -60,24 +60,14 @@ logging:
     #reactor.netty: DEBUG
     org.springframework.cloud.gateway.handler.predicate: trace
     #io.micrometer: TRACE
-
 management:
   tracing:
     sampling:
       probability: 1.0
-    enabled: true
-  #endpoint:
-    #gateway:
-      #enabled: true
-  #endpoints:
-    #web:
-      #exposure:
-        #include: health, gateway
-    #propagation:
-      #type: w3c
-  zipkin:
-    tracing:
-      endpoint: http://${SPRING_CLOUD_ZIPKIN_HOST:localhost}:9411/api/v2/spans
+    export:
+      enabled: true
+      zipkin:
+        endpoint: http://${SPRING_CLOUD_ZIPKIN_HOST:localhost}:9411/api/v2/spans
 
 ---
 spring:
@@ -86,15 +76,17 @@ spring:
       on-profile: docker
   cloud:
     gateway:
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowedOrigins: "http://challenges-frontend:3000"
-            allowedHeaders:
-              - "*"
-            allowedMethods:
-              - "GET"
-              - "POST"
-              - "OPTIONS"
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins: "http://challenges-frontend:3000"
+                allowedHeaders:
+                  - "*"
+                allowedMethods:
+                  - "GET"
+                  - "POST"
+                  - "OPTIONS"
   kafka:
     bootstrap-servers: ${SPRING_CLOUD_KAFKA_HOST}:9092

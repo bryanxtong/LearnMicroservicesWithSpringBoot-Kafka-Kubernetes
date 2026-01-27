@@ -1,13 +1,20 @@
 spring:
+  application:
+    name: gateway
   cloud:
     consul:
       config:
-        data-key: application.yml
-        format: yaml
-        default-context: defaults
+        format: YAML
+        default-context: application
         prefixes:
           - config
-#logging:
-  #level:
-    #org.springframework.amqp.rabbit.connection.CachingConnectionFactory: WARN
+        profile-separator: ','
+        enabled: true
+        fail-fast: false
+        watch:
+          delay: 30000
+          ##avoid Error querying consul Key/Values for context 'config/application/'. Message: I/O error on GET request,need to enhance
+          enabled: false
+          wait-time: 60
+
 
