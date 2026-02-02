@@ -43,8 +43,9 @@ The main concepts included in this project are:
   kind create cluster --config kind-config.yaml
   
   2.   install ingress-nginx
+  ```bash
   kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.6/deploy/static/provider/kind/deploy.yaml
-  
+  ```
 
 ### Building the images yourself
 
