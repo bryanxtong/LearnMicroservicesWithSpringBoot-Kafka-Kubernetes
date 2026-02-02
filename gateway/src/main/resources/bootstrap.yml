@@ -6,8 +6,8 @@ spring:
       config:
         enabled: true
         sources:
-          - name: ${spring.application.name}
           - name: application
+          - name: ${spring.application.name}
         namespace: microservices
       client:
         namespace: microservices
