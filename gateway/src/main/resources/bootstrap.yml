@@ -2,19 +2,16 @@ spring:
   application:
     name: gateway
   cloud:
-    consul:
+    kubernetes:
       config:
-        format: YAML
-        default-context: application
-        prefixes:
-          - config
-        profile-separator: ','
         enabled: true
-        fail-fast: false
-        watch:
-          delay: 30000
-          ##avoid Error querying consul Key/Values for context 'config/application/'. Message: I/O error on GET request,need to enhance
-          enabled: false
-          wait-time: 60
-
-
+        sources:
+          - name: ${spring.application.name}
+          - name: application
+        namespace: microservices
+      client:
+        namespace: microservices
+      reload:
+        enabled: true
+        mode: polling
+        period: 15000ms

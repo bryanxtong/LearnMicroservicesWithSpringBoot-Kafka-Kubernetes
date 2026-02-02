@@ -1,0 +1,178 @@
+---
+# Shared application configuration for all services
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: application
+  namespace: microservices
+data:
+  application.yml: |
+    logging:
+      level:
+        org.springframework.core.env: DEBUG
+---
+# Multiplication service configuration
+# Contains only business logic configuration
+# Basic settings (H2 database, logging pattern, health) are in application.properties
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: multiplication
+  namespace: microservices
+data:
+  application.properties: |
+    # Kafka Topic Configuration
+    kafka.attempts=attempts.topic
+    kafka.attempts.partitions=4
+    kafka.attempts.replica-count=1
+
+    # Kafka Producer Configuration
+    spring.kafka.bootstrap-servers=${SPRING_CLOUD_KAFKA_HOST:kafka}:9092
+    spring.kafka.producer.key-serializer=org.apache.kafka.common.serialization.StringSerializer
+    spring.kafka.producer.value-serializer=org.springframework.kafka.support.serializer.JacksonJsonSerializer
+    spring.kafka.template.observation-enabled=true
+    spring.kafka.listener.observation-enabled=true
+
+    # Kafka Logging Level
+    logging.level.org.springframework.kafka.core.KafkaAdmin=DEBUG
+
+    # Distributed Tracing
+    management.tracing.sampling.probability=1
+    management.tracing.export.zipkin.endpoint=http://${SPRING_CLOUD_ZIPKIN_HOST:zipkin}:9411/api/v2/spans
+---
+# Gamification service configuration
+# Contains only business logic configuration
+# Basic settings (server.port, H2 database, logging pattern, health) are in application.properties
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gamification
+  namespace: microservices
+data:
+  application.properties: |
+    # Kafka Topic Configuration
+    kafka.attempts=attempts.topic
+    kafka.attempts.partitions=4
+    kafka.attempts.replica-count=1
+
+    # Kafka Consumer Configuration
+    spring.kafka.bootstrap-servers=${SPRING_CLOUD_KAFKA_HOST:kafka}:9092
+    spring.kafka.consumer.group-id=gamification
+    spring.kafka.consumer.auto-offset-reset=latest
+    spring.kafka.consumer.key-deserializer=org.apache.kafka.common.serialization.StringDeserializer
+    spring.kafka.consumer.value-deserializer=org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+    spring.kafka.consumer.properties.spring.deserializer.value.delegate.class=org.springframework.kafka.support.serializer.JacksonJsonDeserializer
+    spring.kafka.consumer.properties.spring.json.trusted.packages=*
+    spring.kafka.template.observation-enabled=true
+    spring.kafka.listener.observation-enabled=true
+
+    # Kafka Logging Level
+    logging.level.org.springframework.kafka.core.KafkaAdmin=DEBUG
+
+    # Spring Cloud Compatibility Verifier
+    spring.cloud.compatibility-verifier.enabled=false
+
+    # Distributed Tracing
+    management.tracing.sampling.probability=1
+    management.tracing.export.zipkin.endpoint=http://${SPRING_CLOUD_ZIPKIN_HOST:zipkin}:9411/api/v2/spans
+---
+# Logs service configuration
+# Contains only business logic configuration
+# Basic settings (server.port, health) are in application.properties
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logs
+  namespace: microservices
+data:
+  application.properties: |
+    # Kafka Consumer Configuration
+    spring.kafka.bootstrap-servers=${SPRING_CLOUD_KAFKA_HOST:kafka-0.kafka.microservices.svc.cluster.local}:9092
+    spring.kafka.consumer.group-id=logs
+    spring.kafka.consumer.auto-offset-reset=latest
+    spring.kafka.consumer.key-deserializer=org.apache.kafka.common.serialization.ByteArrayDeserializer
+    spring.kafka.consumer.value-deserializer=org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
+    spring.kafka.consumer.properties.spring.deserializer.value.delegate.class=org.apache.kafka.common.serialization.ByteArrayDeserializer
+
+    # Distributed Tracing
+    management.tracing.export.zipkin.endpoint=http://${SPRING_CLOUD_ZIPKIN_HOST:zipkin}:9411/api/v2/spans
+---
+# Gateway service configuration
+# Contains only business logic and environment-specific settings
+# Basic settings (port, logging pattern, health) are in application.yml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway
+  namespace: microservices
+data:
+  application.yml: |
+    spring:
+      cloud:
+        loadbalancer:
+          ribbon:
+            enabled: false
+
+        gateway:
+          server:
+            webflux:
+              # Routes configuration - can be updated without rebuild
+              routes:
+                - id: multiplication
+                  uri: lb://multiplication/
+                  predicates:
+                    - Path=/api/challenges/**,/api/attempts/**,/api/users/**
+                  filters:
+                    - StripPrefix=1
+
+                - id: gamification
+                  uri: lb://gamification/
+                  predicates:
+                    - Path=/api/leaders
+                  filters:
+                    - StripPrefix=1
+                    
+              # CORS configuration - environment dependent
+              globalcors:
+                cors-configurations:
+                  '[/**]':
+                    allowedOrigins: "http://localhost:3000,http://challenges-frontend:3000"
+                    allowedHeaders:
+                      - "*"
+                    allowedMethods:
+                      - "GET"
+                      - "POST"
+                      - "OPTIONS"
+
+              # Retry logic - configurable
+              default-filters:
+                - name: Retry
+                  args:
+                    retries: 3
+                    methods: GET,POST
+
+              # Observability/tracing
+              observability:
+                enabled: true
+
+      reactor:
+        context-propagation: auto
+
+      # Kafka configuration - from environment
+      kafka:
+        bootstrap-servers: ${SPRING_CLOUD_KAFKA_HOST:kafka}:9092
+
+    # Distributed tracing configuration - from environment
+    management:
+      tracing:
+        sampling:
+          probability: 1.0
+        export:
+          enabled: true
+          zipkin:
+            endpoint: http://${SPRING_CLOUD_ZIPKIN_HOST:zipkin}:9411/api/v2/spans
+
+    # Gateway specific log level
+    logging:
+      level:
+        org.springframework.cloud.gateway.handler.predicate: trace

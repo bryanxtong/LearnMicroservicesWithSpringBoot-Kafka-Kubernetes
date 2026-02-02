@@ -1,5 +1,5 @@
 class GameApiClient {
-    static SERVER_URL = 'http://localhost:8000';
+    static SERVER_URL =  process.env.REACT_APP_API_URL || '/api';
     static GET_LEADERBOARD = '/leaders';
 
     static leaderBoard(): Promise<Response> {

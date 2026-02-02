@@ -1,0 +1,97 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: multiplication
+  namespace: microservices
+  labels:
+    app: multiplication
+spec:
+  type: ClusterIP
+  selector:
+    app: multiplication
+  ports:
+    - name: http
+      port: 8080
+      targetPort: 8080
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: multiplication
+  namespace: microservices
+  labels:
+    app: multiplication
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: multiplication
+  template:
+    metadata:
+      labels:
+        app: multiplication
+    spec:
+      serviceAccountName: default
+      containers:
+      - name: multiplication
+        image: multiplication:0.0.1-SNAPSHOT
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: spring.application.name
+          value: "multiplication"
+        - name: SPRING_CLOUD_KAFKA_HOST
+          value: "kafka"
+        - name: SPRING_CLOUD_ZIPKIN_HOST
+          value: "zipkin"
+        - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
+          value: "kafka:9092"
+        - name: MANAGEMENT_TRACING_EXPORT_ZIPKIN_ENDPOINT
+          value: "http://zipkin:9411/api/v2/spans"
+        volumeMounts:
+        - name: config
+          mountPath: /workspace/config
+          readOnly: true
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /actuator/health/liveness
+            port: 8080
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /actuator/health/readiness
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /actuator/health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 10
+      volumes:
+      - name: config
+        configMap:
+          name: multiplication

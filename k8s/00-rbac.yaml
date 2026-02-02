@@ -1,0 +1,27 @@
+---
+# ClusterRole for Spring Cloud Kubernetes service discovery
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: microservices-reader
+rules:
+  - apiGroups: [""]
+    resources: ["endpoints", "services", "pods", "configmaps"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets"]
+    verbs: ["get", "list", "watch"]
+---
+# ClusterRoleBinding for the default ServiceAccount in microservices namespace
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: microservices-reader-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: microservices-reader
+subjects:
+  - kind: ServiceAccount
+    name: default
+    namespace: microservices
