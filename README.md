@@ -76,6 +76,7 @@ challenges-frontend$ docker build -t challenges-frontend:1.0-SNAPSHOT .
 
 ## Load local docker images to Kind
 
+```bash
 kind load docker-image "gateway:0.0.1-SNAPSHOT" --name kind
 kind load docker-image "gamification:0.0.1-SNAPSHOT" --name kind
 kind load docker-image "multiplication:0.0.1-SNAPSHOT" --name kind
@@ -85,7 +86,7 @@ kind load docker-image "challenges-frontend:1.0-SNAPSHOT" --name kind
 
 kind load docker-image bitnami/kafka:latest --name kind     //official images can ignore
 kind load docker-image openzipkin/zipkin:latest --name kind //official images can ignore
-
+```
 
 See the figure below for a diagram showing the container view.
 
