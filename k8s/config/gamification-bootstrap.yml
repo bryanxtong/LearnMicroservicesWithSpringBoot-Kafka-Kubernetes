@@ -1,0 +1,18 @@
+spring:
+  application:
+    name: gamification
+  cloud:
+    kubernetes:
+      config:
+        enabled: true
+        sources:
+          - name: ${spring.application.name}
+          - name: application
+        namespace: microservices
+        enable-api: true
+      client:
+        namespace: microservices
+      reload:
+        enabled: true
+        mode: polling
+        period: 15000ms

@@ -1,4 +1,4 @@
-# Learn Microservices with Spring Boot 3 - (Spring Cloud and Kafka)
+# Learn Microservices with Spring Boot - (Spring Cloud and Kafka and Kubernetes)
 This repository contains the source code of the practical use case described in the book [Learn Microservices with Spring Boot 3 (3rd Edition)](https://link.springer.com/book/10.1007/978-1-4842-9757-5).
 And I made some changes to logback kafka appender to add headers https://github.com/danielwegener/logback-kafka-appender and add micrometer zipkin trace support.
 
@@ -18,6 +18,33 @@ The main concepts included in this project are:
 * Container Platforms, Application Platforms, and Cloud Services.
 
 ## Running the app
+
+## Playing with Kind kubernetes cluster
+
+  1. create a file kind-config.yaml with content below and create Kind cluster
+
+	kind: Cluster
+	apiVersion: kind.x-k8s.io/v1alpha4
+	name: kind
+	nodes:
+	- role: control-plane
+	  extraPortMappings:
+	  - containerPort: 80
+		hostPort: 80
+		protocol: TCP
+	  - containerPort: 443
+		hostPort: 443
+		protocol: TCP
+	containerdConfigPatches:
+	- |-
+	  [plugins."io.containerd.grpc.v1.cri".dns]
+		servers = ["8.8.8.8", "1.1.1.1"]
+
+  kind create cluster --config kind-config.yaml
+  
+  2.   install ingress-nginx
+  kubectl apply -f https://raw.githubusercontent.com/kubernetes/ingress-nginx/controller-v1.9.6/deploy/static/provider/kind/deploy.yaml
+  
 
 ### Building the images yourself
 
@@ -39,41 +66,33 @@ gateway$ docker build -t  gateway:0.0.1-SNAPSHOT .
 logs$ docker build -t  logs:0.0.1-SNAPSHOT .
 ```
 
-Then, build the consul importer from the `docker/consul` folder:
-
-```bash
-$ consul agent -node=learnmicro -dev
-docker/consul$ consul kv export config/ > consul-kv-docker.json
-docker/consul$ docker build -t consul-importer:1.0 .
-```
-
 And the UI server (first you have to build it with `npm run build`):
 
 ```bash
 challenges-frontend$ npm install
 challenges-frontend$ npm run build
-challenges-frontend$ docker build -t challenges-frontend:1.0 .
+challenges-frontend$ docker build -t challenges-frontend:1.0-SNAPSHOT .
 ```
 
-Once you have all the images ready, run:
+## Load local docker images to Kind
 
-```bash
-docker$ docker-compose up
-```
+kind load docker-image "gateway:0.0.1-SNAPSHOT" --name kind
+kind load docker-image "gamification:0.0.1-SNAPSHOT" --name kind
+kind load docker-image "multiplication:0.0.1-SNAPSHOT" --name kind
+kind load docker-image "logs:0.0.1-SNAPSHOT" --name kind
+kind load docker-image "challenges-frontend:1.0-SNAPSHOT" --name kind
+
+
+kind load docker-image bitnami/kafka:latest --name kind     //official images can ignore
+kind load docker-image openzipkin/zipkin:latest --name kind //official images can ignore
+
 
 See the figure below for a diagram showing the container view.
 
 ![Container View](resources/microservice_patterns-View-Containers.png)
 
-Once the backend and the frontend are started, you can navigate to `http://localhost:3000` in your browser and start resolving multiplication challenges.
+Once the backend and the frontend are started, you can navigate to `http://localhost:80` in your browser and start resolving multiplication challenges.
 
-## Playing with Docker Compose
-
-After the system is up and running, you can quickly scale up and down instances of both Multiplication and Gamification services. For example, you can run:
-
-```bash
-docker$ docker-compose up --scale multiplication=2 --scale gamification=2
-```
 
 And you'll get two instances of each of these services with proper Load Balancing and Service Discovery.
 
