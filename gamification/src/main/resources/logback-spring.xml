@@ -38,7 +38,7 @@
 <!--
         <producerConfig>bootstrap.servers=${SPRING_CLOUD_KAFKA_HOST:-localhost}:9094</producerConfig>
 -->
-        <producerConfig>bootstrap.servers=${SPRING_CLOUD_KAFKA_HOST:-localhost}:9092</producerConfig>
+        <producerConfig>bootstrap.servers=${SPRING_CLOUD_KAFKA_HOST:-kafka}:9092</producerConfig>
 
         <!-- this is the fallback appender if kafka is not available. -->
         <appender-ref ref="CONSOLE" />

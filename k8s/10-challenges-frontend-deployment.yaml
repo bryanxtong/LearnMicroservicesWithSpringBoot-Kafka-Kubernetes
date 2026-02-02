@@ -1,0 +1,89 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: challenges-frontend
+  namespace: microservices
+  labels:
+    app: challenges-frontend
+spec:
+  type: ClusterIP
+  selector:
+    app: challenges-frontend
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 80
+      protocol: TCP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: challenges-frontend
+  namespace: microservices
+  labels:
+    app: challenges-frontend
+spec:
+  replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: challenges-frontend
+  template:
+    metadata:
+      labels:
+        app: challenges-frontend
+    spec:
+      serviceAccountName: default
+      containers:
+      - name: challenges-frontend
+        image: challenges-frontend:1.0-SNAPSHOT
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        env:
+        - name: REACT_APP_API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: challenges-frontend
+              key: REACT_APP_API_URL
+        - name: REACT_APP_ENV
+          valueFrom:
+            configMapKeyRef:
+              name: challenges-frontend
+              key: REACT_APP_ENV
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 15
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        startupProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          failureThreshold: 10

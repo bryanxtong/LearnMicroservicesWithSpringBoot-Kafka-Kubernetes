@@ -9,6 +9,7 @@ spring:
           - name: ${spring.application.name}
           - name: application
         namespace: microservices
+        enable-api: true
       client:
         namespace: microservices
       reload:
